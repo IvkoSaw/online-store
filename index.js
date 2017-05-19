@@ -110,7 +110,7 @@ MongoClient.connect(url, function (err, db) {
                                 elm.product = product
                             });
                             res.render("card.ejs", {
-                                card: card,
+                                card: card[0].products,
                                 numOfItems:numOfItems
                             })
                         })
@@ -214,7 +214,20 @@ MongoClient.connect(url, function (err, db) {
                             })
                     })
             });
-    })
+    });
+
+    app.post('/card/remove-item', function (req,res) {
+        console.log("Connected correctly to server, for /card/remove-item, method - post");
+        db.collection('card')
+            .updateOne({user: req.cookies.user},{$pull:{"products":{productId:req.body.id}}}, function (err) {
+                if (err) {
+                    return console.log(err)
+                }
+                console.log('deleted item successfully');
+                res.status(200);
+                res.end()
+            })
+    });
 
 });
 
