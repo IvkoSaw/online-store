@@ -1,0 +1,6 @@
+.navbar-right>li{
+    margin: 8px;
+}
+.main>div>h4{
+    text-transform: capitalize;
+}

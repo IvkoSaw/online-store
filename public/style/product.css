@@ -1,0 +1,6 @@
+section>h2{
+    text-transform: capitalize;
+}
+.navbar-right>li{
+    margin: 8px;
+}
