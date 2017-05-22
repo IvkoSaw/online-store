@@ -62,8 +62,8 @@
                 <tr data-id='<%= elm.productId %>'>
                     <td> <%= ++key %> </td>
                     <td> <%= elm.product.name %> </td>
-                    <td> $<%= elm.product.price %> </td>
-                    <td> <%= elm.quantity %></td>
+                    <td class="price"> $<%= elm.product.price %> </td>
+                    <td class="quantity"> <%= elm.quantity %></td>
                     <td>
                         <button class="quantity-up" data-id='<%= elm.productId %>'>
                             <span class="glyphicon glyphicon-menu-up"></span>

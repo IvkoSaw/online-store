@@ -4,3 +4,9 @@ section>h2{
 .navbar-right>li{
     margin: 8px;
 }
+.glyphicon-ok{
+    color: green;
+}
+.glyphicon-remove{
+    color: red;
+}

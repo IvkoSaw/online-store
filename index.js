@@ -27,9 +27,11 @@ var url = "mongodb://localhost:27017/onlinestore";
 MongoClient.connect(url, function (err, db) {
 
     app.get('/', function (req,res) {
+        res.cookie('page', 0);//??
         console.log("Connected correctly to server, for /");
         db.collection("products")
             .find()
+            .limit(16)
             .toArray(function (err, docs) {
                 if(err){
                     return console.log(err);
@@ -142,23 +144,23 @@ MongoClient.connect(url, function (err, db) {
                         });
                         var newQuantity = parseInt(product.quantity) + parseInt(req.body.quantity);
                         db.collection('card')
-                            .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]}, {$set:{"products.$.quantity":newQuantity}}, function (err) {
+                            .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]}, {$set:{"products.$.quantity":+newQuantity}}, function (err) {
                                 if (err) {
                                     return console.log(err);
                                 }
                                 console.log("updated quantity successfully");
                                 res.status(200);
-                                res.end()
+                                res.send({unique:false})
                             })
                     }else{
                         db.collection('card')
-                            .updateOne({user: req.cookies.user}, {$push:{products:{productId:req.body.id, quantity:req.body.quantity}}}, function (err) {
+                            .updateOne({user: req.cookies.user}, {$push:{products:{productId:req.body.id, quantity:+req.body.quantity}}}, function (err) {
                                 if (err) {
                                     return console.log(err);
                                 }
                                 console.log("added new item to card");
                                 res.status(200);
-                                res.end()
+                                res.send({unique:true})
                             })
                     }
                 })
@@ -170,7 +172,7 @@ MongoClient.connect(url, function (err, db) {
                 .insertOne({
                     products: [{
                         productId:req.body.id,
-                        quantity:req.body.quantity
+                        quantity:+req.body.quantity
                     }],
                     user: user
                 }, function (err) {
@@ -178,9 +180,25 @@ MongoClient.connect(url, function (err, db) {
                         return console.log(err);
                     }
                     res.status(200);
-                    res.end()
+                    res.send({unique:true})
                 })
         }
+    });
+
+    app.post('/', function (req, res) {
+        var x = req.cookie.page;
+        res.cookie('page', ++x);
+        console.log("Connected correctly to server, for /, method - post");
+        db.collection("products")
+            .find()
+            .skip(16*x)
+            .limit(16)
+            .toArray(function (err, docs) {
+                if(err){
+                    return console.log(err);
+                }
+                res.send({products:docs})
+            });
     });
 
     app.post('/booking', function (req, res) {
@@ -224,6 +242,32 @@ MongoClient.connect(url, function (err, db) {
                     return console.log(err)
                 }
                 console.log('deleted item successfully');
+                res.status(200);
+                res.end()
+            })
+    });
+
+    app.post('/card/quantity-up', function (req,res) {
+        console.log("Connected correctly to server, for /card/quantity-up, method - post");
+        db.collection('card')
+            .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]},{$inc:{"products.$.quantity":1}}, function (err) {
+                if (err) {
+                    return console.log(err)
+                }
+                console.log('successfully');
+                res.status(200);
+                res.end()
+            })
+    });
+
+    app.post('/card/quantity-down', function (req,res) {//not working
+        console.log("Connected correctly to server, for /card/quantity-down, method - post");
+        db.collection('card')
+            .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]},{$inc:{"products.$.quantity":-1}}, function (err) {
+                if (err) {
+                    return console.log(err)
+                }
+                console.log('successfully');
                 res.status(200);
                 res.end()
             })
