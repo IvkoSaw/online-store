@@ -2,7 +2,7 @@ $(function () {
     //change header if user was logged
     if (userName !== "false") {
         $('button[data-target="#sign-in"], button[data-target="#sign-up"]').addClass('hidden');
-        var form = '<li><form class="form-inline" action="/sign-out" method="post"><p class="form-control-static">'+userName+'</p><button type="submit" class="btn btn-primary">Sign out</button></form></li>';
+        var form = '<li><form class="form-inline" action="/sign-out" method="post"><p class="form-control-static">'+userName+'</p><button type="submit" class="btn btn-primary sign-out">Sign out</button></form></li>';
         $('.liForCart').before(form);
     }
 
@@ -189,5 +189,9 @@ $(function () {
                 }
             })
         }
+    });
+
+    $('button[data-target="#sign-up"]').on("click", function () {
+        alert('Soon!')
     })
 });

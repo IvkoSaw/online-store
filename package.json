@@ -1,13 +1,13 @@
 {
-  "name": "lesson7",
+  "name": "online-store",
   "version": "1.0.0",
-  "description": "",
+  "description": "student project",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon"
+    "start": "node index.js"
   },
-  "author": "",
+  "author": "Ivan Blakyta",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.1",
@@ -15,7 +15,6 @@
     "ejs": "^2.5.6",
     "express": "^4.15.2",
     "mongodb": "^2.2.26",
-    "nodemon": "^1.11.0",
     "sha1": "^1.1.1",
     "underscore": "^1.8.3"
   }

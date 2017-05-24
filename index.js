@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 app.use(express.static('public'));
 
-var url = "mongodb://localhost:27017/onlinestore";
+var url = "mongodb://"+process.env.login+":"+process.env.password+"@ds151951.mlab.com:51951/ib-onlinestore";
 
 MongoClient.connect(url, function (err, db) {
 
@@ -320,7 +320,12 @@ MongoClient.connect(url, function (err, db) {
                     res.send({emailError:"Your email is not registered!"})
                 }
             });
+    });
+
+    app.post('/sign-out', function (req, res) {
+        res.clearCookie('userEmail');
+        res.redirect('/');
     })
 });
 
-app.listen(3005);
+app.listen(process.env.PORT || 3000);
