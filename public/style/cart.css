@@ -1,3 +1,6 @@
 .navbar-right>li{
     margin: 8px;
 }
+.hidden{
+    display: none;
+}

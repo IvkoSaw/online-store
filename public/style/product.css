@@ -10,3 +10,6 @@ section>h2{
 .glyphicon-remove{
     color: red;
 }
+.hidden{
+    display: none;
+}

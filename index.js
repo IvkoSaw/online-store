@@ -4,10 +4,7 @@ var app = express();
 var mongo = require('mongodb'),
     MongoClient = mongo.MongoClient;
 
-
 app.set('view engine', 'ejs');
-
-
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
@@ -26,36 +23,54 @@ var url = "mongodb://localhost:27017/onlinestore";
 
 MongoClient.connect(url, function (err, db) {
 
+    //check if user was logged
+    var userName = false;
+    function isUserWasLogged(userEmail) {
+        if (userEmail) {
+            db.collection('users')
+                .find({email:userEmail})
+                .toArray(function (err, userFile) {
+                    if (err) {
+                        return console.log(err)
+                    }
+                    return userName = userFile[0].name;
+                })
+        }
+    }
+
     app.get('/', function (req,res) {
-        res.cookie('page', 0);//??
+        isUserWasLogged(req.cookies.userEmail);
+
         console.log("Connected correctly to server, for /");
         db.collection("products")
             .find()
-            .limit(16)
+            .limit(16) //for infinite scroll
             .toArray(function (err, docs) {
                 if(err){
                     return console.log(err);
                 }
                 var products = docs,
-                     numOfItems = 0;
+                     numOfItems = 0; //show how many unique items are in the cart
+                res.cookie('page', 0); //for infinite scroll
                 if (req.cookies.user) {
-                    db.collection('card')
+                    db.collection('cart')
                         .find({user:req.cookies.user})
                         .toArray(function (err, docs) {
                             if (err) {
                                 return console.log(err)
                             }
                             numOfItems = docs[0].products.length;
-                            res.render("home.ejs", {products:products, numOfItems:numOfItems})
+                            res.render("home.ejs", {products:products, numOfItems:numOfItems, userName:userName})
                         })
                 }else{
-                    res.render("home.ejs", {products:products, numOfItems:numOfItems})
-
+                    res.render("home.ejs", {products:products, numOfItems:numOfItems, userName:userName})
                 }
             });
     });
 
     app.get('/products/:id', function (req, res) {
+        isUserWasLogged(req.cookies.userEmail);
+
         console.log("Connected correctly to server, for /products/...");
         db.collection("products")
             .find({_id:mongo.ObjectId(req.params.id)})
@@ -64,38 +79,40 @@ MongoClient.connect(url, function (err, db) {
                     return console.log(err)
                 }
                 var product = docs,
-                    numOfItems = 0;
+                    numOfItems = 0; //show how many unique items are in the cart
                 if (req.cookies.user) {
-                    db.collection('card')
+                    db.collection('cart')
                         .find({user:req.cookies.user})
                         .toArray(function (err, docs) {
                             if (err) {
                                 return console.log(err)
                             }
                             numOfItems = docs[0].products.length;
-                            res.render("product.ejs", {product:product, numOfItems:numOfItems})
+                            res.render("product.ejs", {product:product, numOfItems:numOfItems, userName:userName})
                         })
                 }else{
-                    res.render("product.ejs", {product:product, numOfItems:numOfItems})
+                    res.render("product.ejs", {product:product, numOfItems:numOfItems, userName:userName})
                 }
             })
     });
 
-    app.get('/card', function (req, res) {
-        var numOfItems = 0;
+    app.get('/cart', function (req, res) {
+        isUserWasLogged(req.cookies.userEmail);
+
+        var numOfItems = 0; //show how many unique items are in the cart
         if (req.cookies.user) {
             var user = req.cookies.user;
-            console.log("Connected correctly to server, for /card");
-            db.collection("card")
+            console.log("Connected correctly to server, for /cart");
+            db.collection("cart")
                 .find({user:user})
                 .toArray(function (err, docs) {
                     if (err) {
                         return console.log(err);
                     }
                     numOfItems = docs[0].products.length;
-                    var card = docs;//[{_id:..., products:[{productId:.., quantity:..},...{}], user:'......'}]
+                    var cart = docs;//[{_id:..., products:[{productId:.., quantity:..},...{}], user:'......'}]
                     var query = [];
-                    card[0].products.forEach(function (elm) {
+                    cart[0].products.forEach(function (elm) {
                         query.push(mongo.ObjectId(elm.productId))
                         });
                     db.collection("products")
@@ -104,46 +121,51 @@ MongoClient.connect(url, function (err, db) {
                             if (err) {
                                 return console.log(err);
                             }
-                            card[0].products.forEach(function (elm, i, arr) {
+                            //merge document(all about product) in cart[0].products
+                            cart[0].products.forEach(function (elm) {
                                 var productId = elm.productId,
                                     product = _.find(docs, function(item){
                                     return productId == item._id;
                                 });
                                 elm.product = product
                             });
-                            res.render("card.ejs", {
-                                card: card[0].products,
-                                numOfItems:numOfItems
+                            res.render("cart.ejs", {
+                                cart: cart[0].products,
+                                numOfItems:numOfItems,
+                                userName:userName
                             })
                         })
                     })
         }else {
-            res.render("card.ejs", {
+            res.render("cart.ejs", {
                 products: [],
-                card: [],
-                numOfItems:numOfItems
+                cart: [],
+                numOfItems:numOfItems,
+                userName:userName
             })
         }
     });
 
-    app.post('/card', function (req, res) {
+    app.post('/cart', function (req, res) {
         if (req.cookies.user) {
-            console.log("Connected correctly to server, for /card, method - post");
-            db.collection('card')
+            console.log("Connected correctly to server, for /cart, method - post");
+            db.collection('cart')
                 .find({user: req.cookies.user})
                 .toArray(function (err, docs) {
                     if (err) {
                         return console.log(err);
                     }
+                    //check if product is unique
                     var isExist = docs[0].products.some(function (elm) {
                         return elm.productId === req.body.id
                     });
                     if (isExist) {
+                        //if yes, just updating quantity
                         var product = _.find(docs[0].products, function(elm){
                             return elm.productId === req.body.id
                         });
                         var newQuantity = parseInt(product.quantity) + parseInt(req.body.quantity);
-                        db.collection('card')
+                        db.collection('cart')
                             .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]}, {$set:{"products.$.quantity":+newQuantity}}, function (err) {
                                 if (err) {
                                     return console.log(err);
@@ -153,22 +175,24 @@ MongoClient.connect(url, function (err, db) {
                                 res.send({unique:false})
                             })
                     }else{
-                        db.collection('card')
+                        //if not, add productId and quantity to the user's document
+                        db.collection('cart')
                             .updateOne({user: req.cookies.user}, {$push:{products:{productId:req.body.id, quantity:+req.body.quantity}}}, function (err) {
                                 if (err) {
                                     return console.log(err);
                                 }
-                                console.log("added new item to card");
+                                console.log("added new item to cart");
                                 res.status(200);
                                 res.send({unique:true})
                             })
                     }
                 })
         }else{
+            //create a new user's document and add productId and quantity to the document
             var user = sha1(new Date());
             res.cookie("user",user,{maxAge:1000*60*60*12});
-            console.log("Connected correctly to server, for /card, method - post");
-            db.collection('card')
+            console.log("Connected correctly to server, for /cart, method - post");
+            db.collection('cart')
                 .insertOne({
                     products: [{
                         productId:req.body.id,
@@ -186,17 +210,18 @@ MongoClient.connect(url, function (err, db) {
     });
 
     app.post('/', function (req, res) {
-        var x = req.cookie.page;
-        res.cookie('page', ++x);
+        //just for infinite scroll
+        var x = req.cookies.page;
         console.log("Connected correctly to server, for /, method - post");
         db.collection("products")
             .find()
-            .skip(16*x)
+            .skip(16*(++x))
             .limit(16)
             .toArray(function (err, docs) {
                 if(err){
                     return console.log(err);
                 }
+                res.cookie('page', ++x);
                 res.send({products:docs})
             });
     });
@@ -204,17 +229,17 @@ MongoClient.connect(url, function (err, db) {
     app.post('/booking', function (req, res) {
         console.log("Connected correctly to server, for /booking, method - post");
         var user = req.cookies.user;
-        db.collection('card')
+        db.collection('cart')
             .find({user: user})
             .toArray(function (err, docs) {
                 if (err) {
                     return console.log(err)
                 }
-                var card = docs;
+                var cart = docs;
                 db.collection('booking')
                     .insertOne({
-                        customer: card[0].user,
-                        products: card[0].products,
+                        customer: cart[0].user,
+                        products: cart[0].products,
                         total: req.body.total,
                         date: new Date().getTime()
                     }, function (err) {
@@ -222,7 +247,7 @@ MongoClient.connect(url, function (err, db) {
                             return console.log(err);
                         }
                         console.log("success, /booking");
-                        db.collection("card")
+                        db.collection("cart")
                             .deleteOne({user: user}, function (err) {
                                 if (err) {
                                     return console.log(err);
@@ -234,9 +259,9 @@ MongoClient.connect(url, function (err, db) {
             });
     });
 
-    app.post('/card/remove-item', function (req,res) {
-        console.log("Connected correctly to server, for /card/remove-item, method - post");
-        db.collection('card')
+    app.post('/cart/remove-item', function (req,res) {
+        console.log("Connected correctly to server, for /cart/remove-item, method - post");
+        db.collection('cart')
             .updateOne({user: req.cookies.user},{$pull:{"products":{productId:req.body.id}}}, function (err) {
                 if (err) {
                     return console.log(err)
@@ -247,9 +272,9 @@ MongoClient.connect(url, function (err, db) {
             })
     });
 
-    app.post('/card/quantity-up', function (req,res) {
-        console.log("Connected correctly to server, for /card/quantity-up, method - post");
-        db.collection('card')
+    app.post('/cart/quantity-up', function (req,res) {
+        console.log("Connected correctly to server, for /cart/quantity-up, method - post");
+        db.collection('cart')
             .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]},{$inc:{"products.$.quantity":1}}, function (err) {
                 if (err) {
                     return console.log(err)
@@ -260,9 +285,9 @@ MongoClient.connect(url, function (err, db) {
             })
     });
 
-    app.post('/card/quantity-down', function (req,res) {//not working
-        console.log("Connected correctly to server, for /card/quantity-down, method - post");
-        db.collection('card')
+    app.post('/cart/quantity-down', function (req,res) {
+        console.log("Connected correctly to server, for /cart/quantity-down, method - post");
+        db.collection('cart')
             .updateOne({$and:[{user: req.cookies.user},{'products.productId':req.body.id}]},{$inc:{"products.$.quantity":-1}}, function (err) {
                 if (err) {
                     return console.log(err)
@@ -273,6 +298,29 @@ MongoClient.connect(url, function (err, db) {
             })
     });
 
+    app.post('/sign-in', function (req, res) {
+        console.log("Connected correctly to server, for /sign-in, method - post");
+        db.collection("users")
+            .find({email:req.body.email})
+            .toArray(function (err, doc) {
+                if (err) {
+                    return console.log(err)
+                }
+                if (doc.length > 0) {
+                    if (doc[0].password === sha1(req.body.password)) {
+                        res.cookie('userEmail', doc[0].email, {maxAge:1000*60*60*24*30});
+                        res.status(200);
+                        res.send({name:doc[0].name})
+                    }else{
+                        res.status(400);
+                        res.send({passError:"Password is not correct!"})
+                    }
+                }else{
+                    res.status(400);
+                    res.send({emailError:"Your email is not registered!"})
+                }
+            });
+    })
 });
 
 app.listen(3005);

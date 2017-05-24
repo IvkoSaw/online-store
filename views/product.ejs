@@ -15,6 +15,7 @@
 
     <script type="text/javascript">
         var id = '<%= product[0]._id %>';
+        var userName = '<%= userName %>';
     </script>
 
     <script src="/script/product.js"></script>
@@ -36,13 +37,13 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
                     <li>
-                        <button type="submit" class="btn btn-primary">Sign in</button>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#sign-in">Sign in</button>
                     </li>
                     <li>
                         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#sign-up">Sign up</button>
                     </li>
-                    <li>
-                        <a class="btn btn-default" href="/card" role="button">
+                    <li class="liForCart">
+                        <a class="btn btn-default" href="/cart" role="button">
                             <span class="glyphicon glyphicon-shopping-cart"></span>
                             <span class="numOfItems"> <%= numOfItems %> </span>
                         </a>
@@ -51,6 +52,35 @@
             </div>
         </div>
     </nav>
+
+    <!-- Modal sign-in -->
+    <div class="modal fade" id="sign-in" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Sign In</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group divEmail">
+                            <label for="email">Email: </label>
+                            <input type="email" class="form-control" id="email" placeholder="Email">
+                        </div>
+                        <div class="form-group divPass">
+                            <label for="password">Password: </label>
+                            <input type="password" class="form-control" id="password" placeholder="Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary submitSignIn">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </header>
     <section>
         <h2> <%= product[0].name %> </h2>
@@ -59,7 +89,7 @@
         <img src="<%= product[0].img %>" alt="image of product" class="img-responsive" width="700px">
         <div class="forBuying">
             <span> $<%= product[0].price %> </span>
-            <button type="button" class="btn btn-primary addToCard">Add to card</button>
+            <button type="button" class="btn btn-primary addToCart">Add to cart</button>
             <span><input type="number" value="1" class="quantity"></span>
         </div>
         <p> <%= product[0].description %> </p>

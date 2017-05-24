@@ -1,4 +1,12 @@
 $(function () {
+    //change header if user was logged
+    if (userName !== "false") {
+        $('button[data-target="#sign-in"], button[data-target="#sign-up"]').addClass('hidden');
+        var form = '<li><form class="form-inline" action="/sign-out" method="post"><p class="form-control-static">'+userName+'</p><button type="submit" class="btn btn-primary">Sign out</button></form></li>';
+        $('.liForCart').before(form);
+    }
+
+    //finally order
     $('.booking').on('click', function () {
         if ($('.total').text().slice(8) > 0) {
             $.ajax({
@@ -18,10 +26,11 @@ $(function () {
         }
     });
 
+    //remove-item from cart
     $('.remove-item').on('click', function () {
         var id = this.dataset.id;
         $.ajax({
-            url:'/card/remove-item',
+            url:'/cart/remove-item',
             method:'POST',
             data:{
                 id: id
@@ -42,10 +51,11 @@ $(function () {
         })
     });
 
+    // increase the number of item in the cart
     $('.quantity-up').on('click', function () {
         var id = this.dataset.id;
         $.ajax({
-            url:'/card/quantity-up',
+            url:'/cart/quantity-up',
             method:'POST',
             data:{
                 id: id
@@ -64,12 +74,14 @@ $(function () {
         })
     });
 
+    // reduce the number of item in the cart
     $('.quantity-down').on('click', function () {
         var id = this.dataset.id;
         if ($('tr[data-id='+id+']>.quantity').text() <= 1) {
+            //remove from card if quantity less then 1
             if (confirm("Do you want to remove this item?")) {
                 $.ajax({
-                    url:'/card/remove-item',
+                    url:'/cart/remove-item',
                     method:'POST',
                     data:{
                         id: id
@@ -88,11 +100,11 @@ $(function () {
                         console.log(res, "error")
                     }
                 })
-                // $('tr[data-id='+id+']>.remove-item').trigger('click'); //????????????????????????????????
             }
         }else{
+            // just reduce the number of item
             $.ajax({
-                url:'/card/quantity-down',
+                url:'/cart/quantity-down',
                 method:'POST',
                 data:{
                     id: id
@@ -107,6 +119,73 @@ $(function () {
                 },
                 error:function (res) {
                     console.log(res, "error")
+                }
+            })
+        }
+    });
+
+    // sign-in in modal window
+    $('.submitSignIn').on("click", function () {
+        var isEmail = false,// for validation before sending ajax
+            isPass = false,
+            email = $('#email').val(),
+            password = $('#password').val();
+
+        function validateEmail(email) {
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+
+        //bootstrap helper classes for showing errors
+        $('.divEmail').removeClass('has-error');
+        $('label[for="email"]').removeClass("control-label");
+        $('.divPass').removeClass('has-error');
+        $('label[for="password"]').removeClass("control-label");
+        $('.hasError').remove();
+
+        // validation
+        if (!validateEmail(email)) {
+            $('.divEmail').addClass('has-error');
+            $('label[for="email"]').addClass("control-label");
+            isEmail = false;
+        }else{
+            isEmail = true;
+        }
+        if (password.length < 6) {
+            $('.divPass').addClass('has-error');
+            $('label[for="password"]').addClass("control-label");
+            isPass = false;
+        }else{
+            isPass = true;
+        }
+
+        //if validation was successfully, send ajax
+        if (isPass && isEmail) {
+            $.ajax({
+                url:'/sign-in',
+                method:'post',
+                data:{
+                    email:email,
+                    password:password
+                },
+                success:function (res) {
+                    console.log("success");
+                    $('#sign-in').modal("hide");
+                    var userName = res.name;
+                    $('button[data-target="#sign-in"], button[data-target="#sign-up"]').addClass('hidden');
+                    var form = '<li><form class="form-inline" action="/sign-out" method="post"><p class="form-control-static">'+userName+'</p><button type="submit" class="btn btn-primary">Sign out</button></form></li>';
+                    $('.liForCart').before(form);
+                },
+                error:function (res) {
+                    console.log(res, "error");
+                    if (res.responseJSON.passError) {
+                        var response = $('<div class="hasError bg-danger h3">'+res.responseJSON.passError+'</div>');
+                        $('.divPass').append(response);
+                    }
+                    if (res.responseJSON.emailError) {
+                        var response = $('<div class="hasError bg-danger h3">'+res.responseJSON.emailError+'</div>');
+                        $('.divPass').append(response);
+                    }
                 }
             })
         }

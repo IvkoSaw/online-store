@@ -4,3 +4,6 @@
 .main>div>h4{
     text-transform: capitalize;
 }
+.hidden{
+    display: none;
+}
