@@ -39,8 +39,6 @@ MongoClient.connect(url, function (err, db) {
     }
 
     app.get('/', function (req,res) {
-        isUserWasLogged(req.cookies.userEmail);
-
         console.log("Connected correctly to server, for /");
         db.collection("products")
             .find()
@@ -52,6 +50,7 @@ MongoClient.connect(url, function (err, db) {
                 var products = docs,
                      numOfItems = 0; //show how many unique items are in the cart
                 res.cookie('page', 0); //for infinite scroll
+                isUserWasLogged(req.cookies.userEmail);
                 if (req.cookies.user) {
                     db.collection('cart')
                         .find({user:req.cookies.user})
