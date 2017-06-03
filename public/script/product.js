@@ -99,7 +99,88 @@ $(function () {
         }
     });
 
-    $('button[data-target="#sign-up"]').on("click", function () {
-        alert('Soon!')
+    $(".submitToSignUp").on("click", function () {
+        var isName = false,
+            isEmail = false,
+            isPass = false,
+            isRepass = false,
+            name = $('#nameSU').val(),
+            email = $('#emailSU').val(),
+            password = $('#passwordSU').val(),
+            rePassword = $('#rePasswordSU').val();
+
+        function validateEmail(email) {
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+
+        $('.divNameSU').removeClass('has-error');
+        $('label[for="nameSU"]').removeClass("control-label");
+        $('.divEmailSU').removeClass('has-error');
+        $('label[for="emailSU"]').removeClass("control-label");
+        $('.divPassSU').removeClass('has-error');
+        $('label[for="passwordSU"]').removeClass("control-label");
+        $('.divRepassSU').removeClass('has-error');
+        $('label[for="rePasswordSU"]').removeClass("control-label");
+        $('.registeredSU').remove();
+
+        //client validation
+        if (name.length <= 1) {
+            $('.divNameSU').addClass('has-error');
+            $('label[for="nameSU"]').addClass("control-label");
+            isName = false;
+        }else{
+            isName = true;
+        }
+        if (!validateEmail(email)) {
+            $('.divEmailSU').addClass('has-error');
+            $('label[for="emailSU"]').addClass("control-label");
+            isEmail = false;
+        }else{
+            isEmail = true;
+        }
+        if (password.length < 6) {
+            $('.divPassSU').addClass('has-error');
+            $('label[for="passwordSU"]').addClass("control-label");
+            isPass = false;
+        }else{
+            isPass = true;
+        }
+        if (password != rePassword || rePassword == "" || isPass == false) {
+            $('.divRepassSU').addClass('has-error');
+            $('label[for="rePasswordSU"]').addClass("control-label");
+            isRepass = false;
+        }else{
+            isRepass = true
+        }
+
+        if (isName && isEmail && isPass && isRepass) {
+            $.ajax({
+                url:"/sign-up",
+                method:"post",
+                data:{
+                    name:name,
+                    email:email,
+                    password:password,
+                    rePassword:rePassword
+                },
+                success:function(res){
+                    $('#sign-up').modal("hide");
+                    var userName = res.name;
+                    $('button[data-target="#sign-in"], button[data-target="#sign-up"]').addClass('hidden');
+                    var form = '<li><form class="form-inline" action="/sign-out" method="post"><p class="form-control-static">'+userName+'</p><button type="submit" class="btn btn-primary">Sign out</button></form></li>';
+                    $('.liForCart').before(form);
+                },
+                error:function(res){
+                    if (res.responseJSON.errorEmail) {
+                        var response = $('<div class="registered bg-danger h3">'+res.responseJSON.errorEmail+'</div>');
+                        $('form').append(response);
+                    }else{
+                        var response = $('<div class="registered bg-danger h3">There was a mistake, try again please!</div>');
+                        $('form').append(response);
+                    }
+                }
+            });
+        }
     })
 });
